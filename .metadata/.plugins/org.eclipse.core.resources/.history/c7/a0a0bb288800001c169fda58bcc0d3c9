@@ -1,0 +1,21 @@
+package br.com.Classes;
+
+public class Animal {
+	private double peso;
+    private String grupo;
+    //gerar getters and setters
+
+    public Animal() {
+        System.out.println("Construtor Padrão");
+    }
+
+    public Animal(double peso, String grupo) {
+        super();
+        this.peso = peso;
+        this.grupo = grupo;
+    }
+    
+    public void latir() {
+    	System.out.print("Argh");
+    }
+}
