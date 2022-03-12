@@ -1,0 +1,5 @@
+package com.algaworks.algalog.client;
+
+public interface ClientRepository extends JpaRespository<Client, Long> {
+
+}

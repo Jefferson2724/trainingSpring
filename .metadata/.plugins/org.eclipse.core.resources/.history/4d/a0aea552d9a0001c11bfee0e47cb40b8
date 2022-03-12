@@ -1,0 +1,21 @@
+package com.algaworks.algalog.client;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode.Include;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonInclude(Include.NON_EMPTY)
+public class ClientDTO {
+	
+	private Long id;
+	
+	@NotBlonk
+	private String name;
+	
+}

@@ -1,0 +1,6 @@
+package com.algaworks.algalog.client;
+
+public interface ClientService {
+
+	public ClientDTO create(ClientDTO clientBody);
+}

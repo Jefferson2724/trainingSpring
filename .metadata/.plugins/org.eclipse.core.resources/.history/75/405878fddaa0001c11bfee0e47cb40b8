@@ -1,0 +1,13 @@
+package com.algaworks.algalog.client;
+
+public class ClientDTOData {
+	public Long id;
+	@NotNull
+	public String name;
+	@NotNull
+	public String email;
+	public String phonenumber;
+
+	public ClientDTOData() {
+	}
+}

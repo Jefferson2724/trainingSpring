@@ -1,0 +1,37 @@
+package com.algaworks.algalog.client;
+
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.sun.istack.NotNull;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonInclude(Include.NON_EMPTY)
+@Component
+public class ClientDTO {
+	
+	private Integer id;
+	
+	@NotNull
+	private String name;
+	
+	@NotNull
+	private String email;
+	
+	private String phonenumber;
+
+	public ClientDTO(Client client) {
+		this.id = client.getId().intValue();
+		this.name = client.getName();
+		this.email = client.getEmail();
+		this.phonenumber = client.getPhonenumber();
+	}
+	
+}

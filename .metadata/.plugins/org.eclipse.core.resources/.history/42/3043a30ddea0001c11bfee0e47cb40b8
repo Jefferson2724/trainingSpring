@@ -1,0 +1,25 @@
+package com.algaworks.algalog.client;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+public class ClientServicelmpl implements ClientService {
+	
+	@Autowired
+	private ClientRepository clientRepository;
+	
+	@Override
+	public ClientDTO create(ClientDTO clientBody) {
+		Client client = this.clientRepository.saveAndFlush(this.toJPA(clientBody));
+		
+		return new ClientDTO(client);
+	}
+	
+	public Client toJPA(ClientDTO client) {
+		return Client.builder()
+				.id(client.getId())
+				.name(client.getName())
+				.email(client.getEmail())
+				.phonenumber(client.getPhonenumber())
+				.build();
+	}
+}

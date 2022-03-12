@@ -1,0 +1,305 @@
+--
+-- LOGBACK
+--
+
+CREATE TABLE logging_event (
+	event_id          BIGINT       NOT NULL AUTO_INCREMENT,
+	timestmp          BIGINT       NOT NULL,
+	formatted_message MEDIUMTEXT   NOT NULL,
+	logger_name       varchar(512) NOT NULL,
+	level_string      varchar(100) NOT NULL,
+	thread_name       varchar(512),
+	reference_flag    SMALLINT,
+	arg0              varchar(512),
+	arg1              varchar(512),
+	arg2              varchar(512),
+	arg3              varchar(255),
+	caller_filename   varchar(512) NOT NULL,
+	caller_class      varchar(512) NOT NULL,
+	caller_method     varchar(512) NOT NULL,
+	caller_line       CHAR(4)      NOT NULL,
+
+	PRIMARY KEY (event_id),
+	INDEX idxMainFieldError (arg3)
+);
+
+CREATE TABLE logging_event_property (
+	event_id     BIGINT       NOT NULL,
+	mapped_key   varchar(255) NOT NULL,
+	mapped_value varchar(255),
+
+	PRIMARY KEY (event_id, mapped_key),
+	FOREIGN KEY (event_id) REFERENCES logging_event (event_id)
+);
+
+CREATE TABLE logging_event_exception (
+	event_id   BIGINT        NOT NULL,
+	i          SMALLINT      NOT NULL,
+	trace_line varchar(2048) NOT NULL,
+
+	PRIMARY KEY (event_id, i),
+	FOREIGN KEY (event_id) REFERENCES logging_event (event_id)
+);
+
+--
+-- HIBERNATE
+--
+
+CREATE TABLE hibernate_sequence (
+	next_val bigint(20) NOT NULL
+);
+
+--
+-- RA
+--
+
+CREATE TABLE ra_account (
+	acc_id                     int(11)      NOT NULL,
+	acc_creation_time          datetime     DEFAULT NULL,
+	acc_description            varchar(255) DEFAULT NULL,
+	acc_enabled                int(1)       DEFAULT 1,
+	acc_logo                   varchar(255) DEFAULT NULL,
+	acc_name                   varchar(255) NOT NULL,
+	acc_last_modification_time datetime     DEFAULT NULL,
+	acc_vertical               varchar(255) DEFAULT NULL,
+
+	PRIMARY KEY (acc_id),
+	UNIQUE KEY uk_acc_name (acc_name)
+);
+
+CREATE TABLE ra_account_auth (
+	auth_id       int(11) NOT NULL AUTO_INCREMENT,
+	auth_external TEXT         DEFAULT NULL,
+	acc_name      varchar(255) DEFAULT NULL,
+
+	PRIMARY KEY (auth_id),
+	UNIQUE KEY uk_acc_name (acc_name),
+	CONSTRAINT fk_acc_name_account_auth FOREIGN KEY (acc_name) REFERENCES ra_account (acc_name)
+);
+
+CREATE TABLE ra_branch (
+	brc_id                     int(11)      NOT NULL AUTO_INCREMENT,
+	acc_creation_time          datetime DEFAULT NULL,
+	brc_name                   varchar(255) NOT NULL,
+	brc_number                 int(11)      NOT NULL,
+	acc_last_modification_time datetime DEFAULT NULL,
+	acc_id                     int(11)      NOT NULL,
+
+	PRIMARY KEY (brc_id),
+	KEY fk_acc_id_branch (acc_id),
+	CONSTRAINT fk_acc_id_branch FOREIGN KEY (acc_id) REFERENCES ra_account (acc_id)
+);
+
+CREATE TABLE ra_user (
+	usr_id                     int(11)      NOT NULL AUTO_INCREMENT,
+	usr_application            int(1)       DEFAULT 0,
+	usr_configurations         varchar(255) DEFAULT NULL,
+	usr_cpf                    varchar(255) DEFAULT NULL,
+	usr_creation_time          datetime     DEFAULT NULL,
+	usr_document               varchar(255) DEFAULT NULL,
+	usr_name                   varchar(255) DEFAULT NULL,
+	usr_password               varchar(255) DEFAULT NULL,
+	usr_profile_picture        varchar(255) DEFAULT NULL,
+	usr_last_modification_time datetime     DEFAULT NULL,
+	usr_username               varchar(255) NOT NULL,
+	acc_id                     int(11)      DEFAULT NULL,
+
+	PRIMARY KEY (usr_id),
+	UNIQUE KEY uk_usr_name (usr_username),
+	KEY fk_acc_id_user (acc_id),
+	CONSTRAINT fk_acc_id_user FOREIGN KEY (acc_id) REFERENCES ra_account (acc_id)
+);
+
+CREATE TABLE ra_service_group (
+	svcg_id   char(4) NOT NULL,
+	svcg_name varchar(100) DEFAULT NULL,
+
+	PRIMARY KEY (svcg_id)
+);
+
+CREATE TABLE ra_service (
+	svc_id          char(6)      NOT NULL,
+	svc_description varchar(255) DEFAULT NULL,
+	svc_name        varchar(255) NOT NULL,
+	svc_image       varchar(200) DEFAULT NULL,
+	svc_mask        char(6)      DEFAULT NULL,
+	svc_type        int(11)      DEFAULT NULL,
+	svcg_id         char(4)      DEFAULT NULL,
+
+	PRIMARY KEY (svc_id),
+	UNIQUE KEY uk_svc_name (svc_name),
+	KEY fk_svcg_id_service (svcg_id),
+	CONSTRAINT fk_svcg_id_service FOREIGN KEY (svcg_id) REFERENCES ra_service_group (svcg_id)
+);
+
+CREATE TABLE ra_service_config (
+	conf_id              bigint(20) NOT NULL,
+	conf_default_value   varchar(300) DEFAULT NULL,
+	conf_name            varchar(45)  DEFAULT NULL,
+	conf_optional        int(1)       DEFAULT '0',
+	conf_regex_validator varchar(300) DEFAULT NULL,
+	conf_type            varchar(15)  DEFAULT NULL,
+	svc_id               char(6)      DEFAULT NULL,
+
+	PRIMARY KEY (conf_id),
+	KEY fk_svc_id_service_config (svc_id),
+	CONSTRAINT fk_svc_id_service_config FOREIGN KEY (svc_id) REFERENCES ra_service (svc_id)
+);
+
+CREATE TABLE ra_service_dependency (
+	svcd_id           int(11) NOT NULL AUTO_INCREMENT,
+	svc_id_dependency char(6) DEFAULT NULL,
+	svc_id            char(6) DEFAULT NULL,
+
+	PRIMARY KEY (svcd_id),
+	KEY fk_svc_id_dependency_service_dependency (svc_id_dependency),
+	KEY fk_svc_id_service_dependency (svc_id),
+	CONSTRAINT fk_svc_id_dependency_service_dependency FOREIGN KEY (svc_id_dependency) REFERENCES ra_service (svc_id),
+	CONSTRAINT fk_svc_id_service_dependency FOREIGN KEY (svc_id) REFERENCES ra_service (svc_id)
+);
+
+CREATE TABLE ra_service_property (
+	srvp_id         int(11) NOT NULL AUTO_INCREMENT,
+	srvp_properties varchar(255) DEFAULT NULL,
+	acc_id          int(11) NOT NULL,
+	svc_id          char(6) NOT NULL,
+
+	PRIMARY KEY (srvp_id),
+	KEY fk_acc_id_service_property (acc_id),
+	KEY fk_svc_id_service_property (svc_id),
+	CONSTRAINT fk_svc_id_service_property FOREIGN KEY (svc_id) REFERENCES ra_service (svc_id),
+	CONSTRAINT fk_acc_id_service_property FOREIGN KEY (acc_id) REFERENCES ra_account (acc_id)
+);
+
+CREATE TABLE ra_feature (
+	ftr_id     bigint(20) NOT NULL,
+	ftr_mask   varchar(45) DEFAULT NULL,
+	ftr_name   varchar(45) DEFAULT NULL,
+	ftr_status char(1)     DEFAULT NULL,
+	svc_id     char(6)     DEFAULT NULL,
+
+	PRIMARY KEY (ftr_id),
+	KEY fk_svc_id_feature (svc_id),
+	CONSTRAINT fk_svc_id_feature FOREIGN KEY (svc_id) REFERENCES ra_service (svc_id)
+);
+
+CREATE TABLE ra_subfeature (
+	sftr_id          int(11) NOT NULL AUTO_INCREMENT,
+	sftr_http_method varchar(7)   DEFAULT NULL,
+	sftr_json_path   varchar(255) DEFAULT NULL,
+	sftr_mask        varchar(45)  DEFAULT NULL,
+	sftr_url         varchar(255) DEFAULT NULL,
+	ftr_id           bigint(20)   DEFAULT NULL,
+
+	PRIMARY KEY (sftr_id),
+	KEY fk_ftr_id_subfeature (ftr_id),
+	CONSTRAINT fk_ftr_id_subfeature FOREIGN KEY (ftr_id) REFERENCES ra_feature (ftr_id)
+);
+
+CREATE TABLE ra_feature_dependency (
+	ftrd_id           int(11) NOT NULL AUTO_INCREMENT,
+	ftr_id_dependency bigint(20) DEFAULT NULL,
+	ftr_id            bigint(20) DEFAULT NULL,
+
+	PRIMARY KEY (ftrd_id),
+	KEY fk_ftr_id_dependency_feature_dependency (ftr_id_dependency),
+	KEY fk_ftr_id_feature_dependency (ftr_id),
+	CONSTRAINT fk_ftr_id_feature_dependency FOREIGN KEY (ftr_id) REFERENCES ra_feature (ftr_id),
+	CONSTRAINT fk_ftr_id_dependency_feature_dependency FOREIGN KEY (ftr_id_dependency) REFERENCES ra_feature (ftr_id)
+);
+
+CREATE TABLE ra_profile (
+	pfl_id                     int(11)      NOT NULL AUTO_INCREMENT,
+	pfl_active_policies_view   int(1)       DEFAULT 0,
+	pfl_creation_time          datetime     DEFAULT NULL,
+	pfl_description            varchar(255) DEFAULT NULL,
+	pfl_enabled                int(1)       DEFAULT 1,
+	pfl_name                   varchar(255) NOT NULL,
+	pfl_panel_view             int(1)       DEFAULT 0,
+	pfl_last_modification_time datetime     DEFAULT NULL,
+	acc_id                     int(11)      NOT NULL,
+
+	PRIMARY KEY (pfl_id),
+	KEY fk_acc_id_profile (acc_id),
+	CONSTRAINT fk_acc_id_profile FOREIGN KEY (acc_id) REFERENCES ra_account (acc_id)
+);
+
+CREATE TABLE ra_permission (
+	pms_id          bigint(20) 	NOT NULL AUTO_INCREMENT,
+	pms_permissions	json 		DEFAULT NULL,
+	svc_id          char(6) 	NOT NULL,
+	pfl_id          int(11)     DEFAULT NULL,
+
+	PRIMARY KEY (pms_id),
+	KEY fk_svc_id_permission (svc_id),
+	KEY fk_pfl_id_permission (pfl_id),
+	CONSTRAINT fk_svc_id_permission FOREIGN KEY (svc_id) REFERENCES ra_service (svc_id),
+	CONSTRAINT fk_pfl_id_permission FOREIGN KEY (pfl_id) REFERENCES ra_profile (pfl_id)
+);
+
+CREATE TABLE ra_access (
+	acs_id      int(11) NOT NULL AUTO_INCREMENT,
+	acc_id      int(11) NOT NULL,
+	brc_id      int(11)     DEFAULT NULL,
+	pfl_id      int(11)     DEFAULT NULL,
+	usr_id      int(11) NOT NULL,
+	usr_type    varchar(25) DEFAULT 'BASIC',
+	usr_enabled int(1)      DEFAULT '1',
+	usr_admin   int(1)      DEFAULT '0',
+
+	PRIMARY KEY (acs_id),
+	KEY fk_acc_id_access (acc_id),
+	KEY fk_brc_id_access (brc_id),
+	KEY fk_pfl_id_access (pfl_id),
+	KEY fk_usr_id_access (usr_id),
+	CONSTRAINT fk_brc_id_access FOREIGN KEY (brc_id) REFERENCES ra_branch (brc_id),
+	CONSTRAINT fk_pfl_id_access FOREIGN KEY (pfl_id) REFERENCES ra_profile (pfl_id),
+	CONSTRAINT fk_usr_id_access FOREIGN KEY (usr_id) REFERENCES ra_user (usr_id),
+	CONSTRAINT fk_acc_id_access FOREIGN KEY (acc_id) REFERENCES ra_account (acc_id)
+);
+
+CREATE TABLE ra_template (
+	tpl_id int(11) NOT NULL AUTO_INCREMENT,
+	pms_id bigint(20) DEFAULT NULL,
+	pfl_id int(11) DEFAULT NULL,
+
+	PRIMARY KEY (tpl_id),
+	KEY fk_pms_id_template (pms_id),
+	KEY fk_pfl_id_template (pfl_id),
+	CONSTRAINT fk_pfl_id_template FOREIGN KEY (pfl_id) REFERENCES ra_profile (pfl_id),
+	CONSTRAINT fk_pms_id_template FOREIGN KEY (pms_id) REFERENCES ra_permission (pms_id)
+);
+
+--
+-- OAUTH
+--
+
+CREATE TABLE oauth_client_details (
+	client_id               varchar(256) NOT NULL,
+	resource_ids            varchar(256)  DEFAULT NULL,
+	client_secret           varchar(256)  DEFAULT NULL,
+	scope                   varchar(256)  DEFAULT NULL,
+	authorized_grant_types  varchar(256)  DEFAULT NULL,
+	web_server_redirect_uri varchar(500)  DEFAULT NULL,
+	authorities             varchar(256)  DEFAULT NULL,
+	access_token_validity   int(11)       DEFAULT NULL,
+	refresh_token_validity  int(11)       DEFAULT NULL,
+	additional_information  varchar(4096) DEFAULT NULL,
+	autoapprove             varchar(256)  DEFAULT NULL,
+
+	PRIMARY KEY (client_id)
+);
+
+--
+-- RECOVER CREDENTIAL
+--
+
+CREATE TABLE ra_recover_credential (
+  rec_id bigint(20) NOT NULL,
+  rec_created_at datetime DEFAULT NULL,
+  rec_token mediumtext,
+  usr_id int(11) DEFAULT NULL,
+  PRIMARY KEY (rec_id),
+  KEY fk_usr_id_recover_credential (usr_id),
+  CONSTRAINT fk_usr_id_recover_credential FOREIGN KEY (usr_id) REFERENCES ra_user (usr_id)
+);
